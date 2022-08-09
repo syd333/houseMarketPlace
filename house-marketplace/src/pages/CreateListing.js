@@ -14,7 +14,8 @@ import { v4 as uuidv4 } from "uuid";
 import Spinner from "../components/Spinner";
 
 function CreateListing() {
-  const [geolocationEnabled, setGeolocationEnabled] = useState(true);
+    // set to true when have api key
+  const [geolocationEnabled, setGeolocationEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     type: "rent",
@@ -66,15 +67,39 @@ function CreateListing() {
    return () => {
      isMounted.current = false;
    };
-
+   // eslint-disable-next-line react-hooks/exhaustive-deps
  }, [isMounted]);
 
   const onSubmit = (e) => {
     e.preventDefault();
+    console.log(formData)
   };
 
   const onMutate = (e) => {
-    console.log(e);
+    let boolean = null;
+
+    if (e.target.value === "true") {
+      boolean = true;
+    }
+    if (e.target.value === "false") {
+      boolean = false;
+    }
+
+    // Files
+    if (e.target.files) {
+      setFormData((prevState) => ({
+        ...prevState,
+        images: e.target.files,
+      }));
+    }
+
+    // Text/Booleans/Numbers
+    if (!e.target.files) {
+      setFormData((prevState) => ({
+        ...prevState,
+        [e.target.id]: boolean ?? e.target.value,
+      }));
+    }
   };
 
   if (loading) {
