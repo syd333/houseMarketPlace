@@ -14,9 +14,10 @@ import { v4 as uuidv4 } from "uuid";
 import Spinner from "../components/Spinner";
 
 function CreateListing() {
-    // set to true when have api key
-  const [geolocationEnabled, setGeolocationEnabled] = useState(false);
-  const [loading, setLoading] = useState(false);
+  // set to true when have api key
+  // set to false to input lat + lng manually
+  const [geolocationEnabled, setGeolocationEnabled] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     type: "rent",
     name: "",
@@ -49,30 +50,75 @@ function CreateListing() {
     longitude,
   } = formData;
 
- const auth = getAuth();
- const navigate = useNavigate();
- const isMounted = useRef(true);
+  const auth = getAuth();
+  const navigate = useNavigate();
+  const isMounted = useRef(true);
 
- useEffect(() => {
-   if (isMounted) {
-     onAuthStateChanged(auth, (user) => {
-       if (user) {
-         setFormData({ ...formData, userRef: user.uid });
-       } else {
-         navigate("/sign-in");
-       }
-     });
-   }
+  useEffect(() => {
+    if (isMounted) {
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          setFormData({ ...formData, userRef: user.uid });
+        } else {
+          navigate("/sign-in");
+        }
+      });
+    }
 
-   return () => {
-     isMounted.current = false;
-   };
-   // eslint-disable-next-line react-hooks/exhaustive-deps
- }, [isMounted]);
+    return () => {
+      isMounted.current = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMounted]);
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData)
+    // console.log(formData)
+
+    // setLoading(true);
+
+    if (discountedPrice >= regularPrice) {
+      // setLoading(false);
+      toast.error("Discounted price needs to be less than regular price");
+      return;
+    }
+
+    if (images.length > 6) {
+      // setLoading(false);
+      toast.error("Max 6 images");
+      return;
+    }
+
+    let geolocation = {};
+    let location;
+
+    if (geolocationEnabled) {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${process.env.REACT_APP_GEOCODE_API_KEY}`
+      );
+
+      const data = await response.json();
+      // console.log(data);
+
+      geolocation.lat = data.results[0]?.geometry.location.lat ?? 0;
+      geolocation.lng = data.results[0]?.geometry.location.lng ?? 0;
+
+      location =
+        data.status === "ZERO_RESULTS"
+          ? undefined
+          : data.results[0]?.formatted_address;
+
+      if (location === undefined || location.includes("undefined")) {
+        setLoading(false);
+        toast.error("Please enter a correct address");
+        return;
+      }
+    } else {
+      geolocation.lat = latitude;
+      geolocation.lng = longitude;
+      location = address;
+    }
+    setLoading(false);
   };
 
   const onMutate = (e) => {
@@ -102,9 +148,9 @@ function CreateListing() {
     }
   };
 
-  if (loading) {
-    return <Spinner />;
-  }
+  // if (loading) {
+  //   return <Spinner />;
+  // }
   return (
     <div className="profile">
       <header>
