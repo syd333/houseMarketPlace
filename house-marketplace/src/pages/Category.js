@@ -63,8 +63,12 @@ function Category() {
   return (
     <div className="category">
       <header>
-        <p className="pageHeader">category</p>
-        {params.categoryName === "rent" ? "Places for rent" : "Places for sale"}
+        <p className="pageHeader">
+          {" "}
+          {params.categoryName === "rent"
+            ? "Places for rent"
+            : "Places for sale"}
+        </p>
       </header>
       {loading ? (
         <Spinner />
